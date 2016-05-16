@@ -13,6 +13,34 @@ import org.jsoup.select.Elements;
 public class WikiPhilosophy {
 	
 	final static WikiFetcher wf = new WikiFetcher();
+    
+    public static Element findLink(Element paragraph) {
+        Iterable<Node> para = new WikiNodeIterable(paragraph);
+        for (Node node: para) {
+            if (node instanceof Element) {
+                Element elem = (Element)node;
+                if (isLink(elem))
+                    return elem;
+            }
+        }
+        return null;
+    }
+    
+    public static boolean isLink(Element el) {
+        return el.tagName().equals("a");
+    }
+    
+    public static Element searchParas(String url) throws IOException {
+        Elements paragraphs = wf.fetchWikipedia(url);
+        
+        for (Element para: paragraphs) {
+            Element link = findLink(para);
+            if (link != null)
+                return link;
+        }
+        
+        return null;
+    }
 	
 	/**
 	 * Tests a conjecture about Wikipedia and Philosophy.
@@ -28,24 +56,23 @@ public class WikiPhilosophy {
 	 * @throws IOException
 	 */
 	public static void main(String[] args) throws IOException {
-		
-        // some example code to get you started
-
 		String url = "https://en.wikipedia.org/wiki/Java_(programming_language)";
-		Elements paragraphs = wf.fetchWikipedia(url);
-
-		Element firstPara = paragraphs.get(0);
-		
-		Iterable<Node> iter = new WikiNodeIterable(firstPara);
-		for (Node node: iter) {
-			if (node instanceof TextNode) {
-				System.out.print(node);
-			}
+        
+        for (int i = 0; i < 5; i++) {
+            Element firstLink = searchParas(url);
+            if (firstLink == null) {
+                System.out.println("No links. End");
+                return;
+            }
+            
+            url = firstLink.attr("abs:href");
+            
+            if (url.equals("https://en.wikipedia.org/wiki/Philosophy")) {
+                System.out.println("Reached philosophy");
+                return;
+            }
         }
-
-        // the following throws an exception so the test fails
-        // until you update the code
-        String msg = "Complete this lab by adding your code and removing this statement.";
-        throw new UnsupportedOperationException(msg);
-	}
+        
+        System.out.println("Not found");
+    }
 }
